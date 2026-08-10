@@ -1,0 +1,19 @@
+# ---------------------------------------------------------------------------
+# Caddy in front of Artifact Room — the recommended proxy (automatic TLS).
+#
+# One container serves BOTH origins; the app branches on the Host header, so
+# the proxy's only job is to route two hostnames to the same upstream and
+# terminate TLS. Replace example.com; point both DNS records at this host.
+#
+#   APP_ORIGIN=https://app.example.com  VIEWER_ORIGIN=https://view.example.com
+# ---------------------------------------------------------------------------
+
+app.example.com {
+	reverse_proxy 127.0.0.1:3000
+	encode zstd gzip
+}
+
+view.example.com {
+	reverse_proxy 127.0.0.1:3000
+	encode zstd gzip
+}

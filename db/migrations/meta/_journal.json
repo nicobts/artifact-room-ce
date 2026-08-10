@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1782214608289,
+      "tag": "0000_panoramic_vance_astro",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1782215975182,
+      "tag": "0001_goofy_lady_vermin",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782217527208,
+      "tag": "0002_ambiguous_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1782222173550,
+      "tag": "0003_dark_nightcrawler",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1782321269099,
+      "tag": "0004_common_gambit",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1782376599835,
+      "tag": "0005_artifact_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1782376623855,
+      "tag": "0006_creator_prefs",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1782996952977,
+      "tag": "0007_hard_gabe_jones",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1785159482652,
+      "tag": "0008_admin_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1785252853375,
+      "tag": "0009_drop_waitlist",
+      "breakpoints": true
+    }
+  ]
+}

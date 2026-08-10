@@ -1,0 +1,125 @@
+name: Release
+
+# Tag-driven release: pushing a `v*` tag builds the multi-arch image, publishes
+# it to GHCR with SBOM + provenance, scans it, and opens the GitHub Release.
+# Full process (versioning, verification, rollback): devops/RELEASING.md.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  # ── Build + push the multi-arch image to GHCR ─────────────────────────────
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      # QEMU so the arm64 half of the manifest builds on the amd64 runner.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # v1.2.3       -> 1.2.3, 1.2, latest, sha-<commit>
+          # v1.2.3-rc.1  -> 1.2.3-rc.1, sha-<commit>   (no 1.2, no latest)
+          # `latest` is added automatically only for stable semver tags.
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          sbom: true # CycloneDX SBOM attached to the image
+          provenance: mode=max # SLSA build provenance
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # GitHub-native build-provenance attestation, pushed to the registry.
+      # Verify with: gh attestation verify oci://ghcr.io/<repo>:<tag> -R <repo>
+      # Unavailable on user-owned private repos (the v0.1.0 release died here);
+      # the buildx SBOM + SLSA provenance above still attach to the image.
+      - if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  # ── Scan the exact pushed digest; findings land in the Security tab ──────
+  # Runs after push on purpose: a finding alerts loudly (red run + code
+  # scanning alert) without leaving a half-published release.
+  scan:
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      # Pinned by commit (= v0.36.0): the action's old unprefixed version tags
+      # (0.28.0) were deleted upstream, which broke the v0.2.0 scan job.
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          image-ref: ghcr.io/${{ github.repository }}@${{ needs.image.outputs.digest }}
+          format: sarif
+          output: trivy-image.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      # Code-scanning upload needs Advanced Security on private repos; while
+      # private, findings are visible in this job's log instead.
+      - if: ${{ !github.event.repository.private }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+          category: image-release
+
+  # ── GitHub Release with auto-generated notes ──────────────────────────────
+  release:
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      # Idempotent: skip if a maintainer already drafted the release by hand.
+      # Tags containing `-` (v1.2.3-rc.1) are marked pre-release.
+      - run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — skipping."
+            exit 0
+          fi
+          EXTRA=""
+          case "$TAG" in *-*) EXTRA="--prerelease" ;; esac
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --generate-notes $EXTRA \
+            --notes "Image: \`ghcr.io/$GITHUB_REPOSITORY:${TAG#v}\` (linux/amd64, linux/arm64) — digest \`${{ needs.image.outputs.digest }}\`. Deploy guide: [devops/DEPLOYMENT.md](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/devops/DEPLOYMENT.md)."

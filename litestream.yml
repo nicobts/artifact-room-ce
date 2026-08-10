@@ -1,0 +1,17 @@
+# Litestream — continuous replication of the SQLite database to S3-compatible
+# object storage (disaster recovery, NOT the app data layer — see ADR 8).
+#
+# Production entrypoint wraps the app so replication runs alongside it:
+#   litestream replicate -exec "node server.js"
+#
+# Restore (before the app starts) on a fresh volume:
+#   litestream restore -o /app/data/artifact-room.sqlite "${LITESTREAM_REPLICA_URL}"
+#
+# Env: LITESTREAM_REPLICA_URL (e.g. s3://bucket/artifact-room),
+#      LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY.
+dbs:
+  - path: /app/data/artifact-room.sqlite
+    replicas:
+      - url: ${LITESTREAM_REPLICA_URL}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}

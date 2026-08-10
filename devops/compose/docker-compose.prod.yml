@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------------------
+# Artifact Room — production compose (published image, no local build).
+#
+#   docker compose --env-file .env -f devops/compose/docker-compose.prod.yml up -d
+#
+# Pin a version for real deployments (ARTIFACT_ROOM_VERSION=1.2.3 in .env);
+# `latest` is fine only for kicking the tires. Full guide: ../DEPLOYMENT.md.
+#
+# Relative paths below resolve from THIS file's directory. If you copy this
+# file out of the repo (image-only deployment), copy `litestream.yml` and
+# `.env.example` from the repo root next to it and adjust the two mounts.
+# ---------------------------------------------------------------------------
+services:
+  app:
+    image: ghcr.io/nicobts/artifact-room-ce:${ARTIFACT_ROOM_VERSION:-latest}
+    # PID-1 init: signals reach node so SIGTERM triggers graceful shutdown.
+    init: true
+    restart: unless-stopped
+    ports:
+      # Bind to loopback — a reverse proxy (../proxy/) terminates TLS and is
+      # the only thing exposed. Remove the 127.0.0.1 prefix only if something
+      # else fronts this host.
+      - "127.0.0.1:3000:3000"
+    environment:
+      # The two-origin spine: MUST be distinct hosts in production.
+      APP_ORIGIN: "${APP_ORIGIN:?set APP_ORIGIN, e.g. https://app.example.com}"
+      VIEWER_ORIGIN: "${VIEWER_ORIGIN:?set VIEWER_ORIGIN, e.g. https://view.example.com}"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?generate one with `openssl rand -base64 32`}"
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-${APP_ORIGIN}}
+      SIGNUP_MODE: ${SIGNUP_MODE:-invite}
+      SIGNUP_ALLOWLIST: ${SIGNUP_ALLOWLIST:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      DATA_DIR: /app/data
+      DATABASE_PATH: /app/data/artifact-room.sqlite
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      VIEWER_CDN_ALLOWLIST: ${VIEWER_CDN_ALLOWLIST:-}
+      SAFE_BROWSING_API_KEY: ${SAFE_BROWSING_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    volumes:
+      # ONE volume = ALL state (SQLite DB + blobs). Back this up.
+      - artifact-data:/app/data
+
+  # Optional continuous SQLite backup to S3-compatible storage (disaster
+  # recovery — see RUNBOOK.md). Off by default; enable with:
+  #   docker compose --profile backup ... up -d
+  # and set the three LITESTREAM_* vars in .env.
+  litestream:
+    image: litestream/litestream:0.3
+    profiles: ["backup"]
+    restart: unless-stopped
+    command: replicate -config /etc/litestream.yml
+    environment:
+      LITESTREAM_REPLICA_URL: "${LITESTREAM_REPLICA_URL:?set LITESTREAM_REPLICA_URL, e.g. s3://bucket/artifact-room}"
+      LITESTREAM_ACCESS_KEY_ID: "${LITESTREAM_ACCESS_KEY_ID:?}"
+      LITESTREAM_SECRET_ACCESS_KEY: "${LITESTREAM_SECRET_ACCESS_KEY:?}"
+    volumes:
+      - artifact-data:/app/data
+      - ../../litestream.yml:/etc/litestream.yml:ro
+
+volumes:
+  artifact-data:

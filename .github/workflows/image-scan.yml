@@ -1,0 +1,55 @@
+name: Image scan
+
+# New CVEs are disclosed against images that never changed. This re-scans the
+# published :latest image weekly so operators hear about it from us — findings
+# land in the Security tab (code scanning, category `image-scheduled`).
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC (off the :00 thundering herd)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      # Human-readable findings straight in the job log (the SARIF pass below
+      # writes to a file, which is invisible when its upload is skipped on
+      # private repos). exit-code=1 turns the run red on CRITICAL/HIGH.
+      # Pinned by commit (= v0.36.0): the action's old unprefixed version tags
+      # (0.28.0) were deleted upstream.
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:latest
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - if: ${{ !github.event.repository.private }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:latest
+          format: sarif
+          output: trivy-image.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          skip-setup-trivy: true
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      # Code-scanning upload needs Advanced Security on private repos.
+      - if: ${{ !github.event.repository.private }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+          category: image-scheduled

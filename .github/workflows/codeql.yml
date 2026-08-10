@@ -1,0 +1,29 @@
+name: CodeQL
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+
+permissions:
+  contents: read
+  security-events: write
+  # codeql-action needs to read workflow-run metadata on PR analyses; the
+  # explicit permissions block above would otherwise drop this default grant.
+  actions: read
+
+jobs:
+  analyze:
+    # Code scanning upload requires GitHub Advanced Security on private repos;
+    # skip while private (the job runs automatically once the repo is public).
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+      - uses: github/codeql-action/analyze@v3

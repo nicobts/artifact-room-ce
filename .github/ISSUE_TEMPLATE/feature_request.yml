@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a capability or improvement
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This issue is the design gate.** Substantial changes need an agreed
+        design here before a pull request opens — it is how architectural drift
+        gets caught in a paragraph instead of in 500 lines.
+        Please check the idea does not cross an invariant in
+        `docs/05-security.md` or `docs/04-data-model.md` (no raw IP at rest;
+        events key to the share, never the artifact), or one of the boundaries
+        under "Explicitly forbidden in MVP" in `docs/03-stack.md` (no viewer
+        accounts, no third-party analytics, no anonymous upload, no
+        Supabase/Postgres/S3-as-app-storage, not a general static host).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What user problem does this solve? Who is the user (creator vs viewer)?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Does this fit the MVP scope, or is it post-MVP?
+      options:
+        - MVP (core share-and-watch loop)
+        - Post-MVP (schema-ready, flow later)
+        - Managed-tier / out of OSS core
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

@@ -1,0 +1,33 @@
+# Local single-container run. `docker compose up --build`.
+# Production uses real subdomains for APP_ORIGIN / VIEWER_ORIGIN behind one container.
+services:
+  app:
+    build: .
+    # PID-1 init for proper signal forwarding + zombie reaping (node stays the
+    # main process; the app handles SIGTERM for graceful shutdown).
+    init: true
+    ports:
+      - "3000:3000"
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+      VIEWER_ORIGIN: ${VIEWER_ORIGIN:-http://view.localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-only-insecure-change-me}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      SIGNUP_MODE: ${SIGNUP_MODE:-open}
+      DATA_DIR: /app/data
+      DATABASE_PATH: /app/data/artifact-room.sqlite
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Optional first-open email (open-notifications) — off unless SMTP_HOST set
+      # AND a creator opts in. Requires `nodemailer` installed in the image.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    volumes:
+      # One volume = all state (SQLite file + blobs). Back this up.
+      - artifact-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  artifact-data:

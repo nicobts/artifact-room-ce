@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Typecheck + lint + unit + integration. Fast, blocks merge on failure.
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npm run test:integration
+
+  # End-to-end across BOTH origins (app.localhost / view.localhost) so the
+  # security walls (separate origin, sandbox, CSP, no creator cookie on viewer)
+  # are exercised in CI exactly as in production.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare env + database
+        run: |
+          cp .env.example .env
+          node -e "const fs=require('fs');let s=fs.readFileSync('.env','utf8');s=s.replace(/BETTER_AUTH_SECRET=.*/,'BETTER_AUTH_SECRET='+require('crypto').randomBytes(32).toString('base64url'));fs.writeFileSync('.env',s)"
+          # The e2e suite exercises open sign-up flows; production keeps the
+          # secure invite-only default from .env.example (H1 hardening).
+          node -e "const fs=require('fs');let s=fs.readFileSync('.env','utf8');s=s.replace(/SIGNUP_MODE=.*/,'SIGNUP_MODE=open');fs.writeFileSync('.env',s)"
+          npm run db:migrate
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # The exact image we ship must build and boot on every PR — not discovered
+  # broken at tag time. Builds the Dockerfile (amd64 only here; the release
+  # workflow does the multi-arch build) and smoke-tests a running container:
+  # /healthz (process up) and /readyz (migrations at head + storage writable).
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: artifact-room:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Boot container and probe health endpoints
+        run: |
+          docker run -d --name smoke --init -p 3000:3000 \
+            -e BETTER_AUTH_SECRET="$(openssl rand -base64 32)" \
+            -e APP_ORIGIN=http://localhost:3000 \
+            -e VIEWER_ORIGIN=http://view.localhost:3000 \
+            -e BETTER_AUTH_URL=http://localhost:3000 \
+            artifact-room:ci
+          for _ in $(seq 1 30); do
+            curl -fsS http://localhost:3000/healthz >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://localhost:3000/healthz
+          curl -fsS http://localhost:3000/readyz
+      - name: Container logs (on failure)
+        if: failure()
+        run: docker logs smoke || true
+
+  # Dependency advisory gate — fail on known-exploitable vulnerabilities in
+  # dependencies that ship in the image. Dev-only toolchains (eslint, drizzle-kit,
+  # test runners) never reach production; their advisories are reported by the
+  # non-blocking full audit below instead of blocking every merge on chains
+  # upstream hasn't patched.
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - name: Full audit (informational)
+        run: npm audit --audit-level=high || true

@@ -1,0 +1,49 @@
+# Keep the build context tiny and reproducible. Anything the build does not
+# need is excluded so `COPY . .` never ships local cruft, secrets, or state into
+# the image (and so context changes don't bust the layer cache needlessly).
+
+# Dependencies / build output — reinstalled and rebuilt inside the image.
+node_modules
+.pnp
+.pnp.*
+.yarn
+.next
+out
+build
+dist
+*.tsbuildinfo
+
+# Runtime state — the single-volume SQLite DB + blobs must NEVER be baked in.
+data
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets / env — never copy real secrets into an image layer.
+.env
+.env.*
+!.env.example
+*.pem
+
+# VCS / CI / editor / docs noise — irrelevant to the build.
+.git
+.gitignore
+.github
+.vscode
+.idea
+*.md
+!README.md
+
+# Tests / specs — not needed to build or run the server.
+tests
+playwright.config.*
+playwright-report
+test-results
+
+# Docker / compose themselves + deployment docs/examples.
+Dockerfile
+.dockerignore
+docker-compose*.yml
+devops
