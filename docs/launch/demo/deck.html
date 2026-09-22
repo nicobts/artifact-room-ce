@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Northwind × Acme — Q4 rollout proposal</title>
+<style>
+  :root { --ink:#0f172a; --muted:#64748b; --accent:#0f766e; --bg:#f8fafc; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family: Inter, system-ui, sans-serif; color:var(--ink); background:var(--bg); }
+  section { min-height:100vh; padding:12vh 10vw; display:flex; flex-direction:column; justify-content:center; gap:22px; border-bottom:1px solid #e2e8f0; }
+  .kicker { color:var(--accent); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:14px; }
+  h1 { font-size:56px; line-height:1.05; }
+  h2 { font-size:44px; line-height:1.1; }
+  p { font-size:22px; color:var(--muted); max-width:760px; line-height:1.5; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:980px; }
+  .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:26px; }
+  .card h3 { font-size:20px; margin-bottom:8px; }
+  .price { font-size:40px; font-weight:700; color:var(--ink); }
+  .card.best { border:2px solid var(--accent); }
+  .muted { color:var(--muted); font-size:16px; }
+</style>
+</head>
+<body>
+  <section data-slide id="overview">
+    <div class="kicker">Proposal · Q4 2026</div>
+    <h1>Northwind × Acme<br>Q4 rollout</h1>
+    <p>How we get your field teams onto one analytics workspace in six weeks.</p>
+  </section>
+  <section data-slide id="problem">
+    <div class="kicker">The problem</div>
+    <h2>Four tools, no single answer</h2>
+    <p>Regional leads rebuild the same weekly report by hand. Numbers disagree, and decisions wait for Monday.</p>
+  </section>
+  <section data-slide id="approach">
+    <div class="kicker">Our approach</div>
+    <h2>One workspace, rolled out in three waves</h2>
+    <div class="grid">
+      <div class="card"><h3>Wave 1</h3><p class="muted">Pilot with two regions, weeks 1–2</p></div>
+      <div class="card"><h3>Wave 2</h3><p class="muted">All field teams, weeks 3–4</p></div>
+      <div class="card"><h3>Wave 3</h3><p class="muted">Exec reporting, weeks 5–6</p></div>
+    </div>
+  </section>
+  <section data-slide id="pricing">
+    <div class="kicker">Pricing</div>
+    <h2>Three options</h2>
+    <div class="grid">
+      <div class="card"><h3>Starter</h3><div class="price">€2.4k</div><p class="muted">per month · 50 seats</p></div>
+      <div class="card best"><h3>Growth</h3><div class="price">€5.9k</div><p class="muted">per month · 200 seats · recommended</p></div>
+      <div class="card"><h3>Enterprise</h3><div class="price">Custom</div><p class="muted">SSO, audit log, dedicated support</p></div>
+    </div>
+  </section>
+  <section data-slide id="next-steps">
+    <div class="kicker">Next steps</div>
+    <h2>Kick-off on 6 October</h2>
+    <p>Confirm the option, name two pilot regions, and we start the week after.</p>
+  </section>
+</body>
+</html>

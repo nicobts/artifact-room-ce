@@ -62,3 +62,6 @@ Thumbs.db
 # local secrets / scratch
 democred.txt
 *.cred.txt
+
+# demo recordings (docs/launch/demo)
+docs/launch/demo/out/

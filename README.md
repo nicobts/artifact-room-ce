@@ -16,8 +16,11 @@ Host AI-generated HTML artifacts (decks, prototypes, dashboards from any tool), 
 
 > **Status: MVP complete.** All ten core capabilities are implemented and tested (unit + integration + e2e), typecheck/lint/build green. Pre-1.0: APIs may still shift. See [what's built](#whats-built).
 
-<!-- LAUNCH: record a real screencast and replace this placeholder before posting. -->
-> 🎬 **See it in 20 seconds** — _[screencast placeholder]_: upload an HTML artifact → create a per-recipient link → watch which slide they dwelt on, whether they returned, whether they forwarded it. Drop the GIF at `docs/launch/assets/share-and-watch.gif` and embed it here.
+<p align="center">
+  <img src="docs/launch/assets/share-and-watch.gif" alt="Upload an HTML deck, create a link for one recipient, watch her read it and linger on pricing, then see per-slide dwell and a forwarded open on her engagement page" width="100%">
+</p>
+
+<p align="center"><sub>Upload an artifact → create a per-recipient link → see which slide they dwelt on and whether they forwarded it. Recorded against a real instance; <a href="docs/launch/demo/">how it's made</a>.</sub></p>
 
 ## Why
 
