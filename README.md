@@ -2,6 +2,10 @@
 
 # Artifact Room
 
+_also known as **Open Artifact** — the open-source community edition_
+
+🌐 **[artifact-room.com](https://artifact-room.com/)**
+
 **Share freely · secure by design · meaningful insight — open source, self-hostable, provider-agnostic.**
 
 Host AI-generated HTML artifacts (decks, prototypes, dashboards from any tool), share them with a specific external person via an unbranded link you own, and see what they actually did with it — which slide they dwelt on, whether they returned, whether they forwarded it.
@@ -10,7 +14,7 @@ Host AI-generated HTML artifacts (decks, prototypes, dashboards from any tool), 
 [![CodeQL](https://github.com/nicobts/artifact-room-ce/actions/workflows/codeql.yml/badge.svg)](https://github.com/nicobts/artifact-room-ce/actions/workflows/codeql.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](./LICENSE)
 
-[Security policy](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [Runbook](./RUNBOOK.md)
+[Website](https://artifact-room.com/) · [Security policy](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [Runbook](./RUNBOOK.md)
 
 </div>
 
@@ -119,7 +123,7 @@ Post-MVP (schema already ready): email-gated flow, identified comments, sender n
 
 ## Open source vs. hosted (planned)
 
-Artifact Room's **OSS core is a real product, not crippleware.** Self-host it and you get the full
+Artifact Room's **OSS core** (the community edition, *Open Artifact*) **is a real product, not crippleware.** Self-host it and you get the full
 share-and-watch loop: agnostic HTML upload, public + password + per-recipient links, per-slide dwell
 and forwarding detection, and the creator dashboard — all in one container you own, cookieless, with
 no raw IP at rest.

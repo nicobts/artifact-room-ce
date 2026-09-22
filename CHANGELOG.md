@@ -6,6 +6,8 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-22
+
 ### Added
 
 - **Four share protection levels.** One token mechanic, one creator-facing
@@ -71,6 +73,12 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- **Next.js 16.3.5 and sharp 0.35.4.** `next@16.2.12` fell inside the ranges
+  of two critical advisories (GHSA-p293-qw3h-jr36, unauthenticated RCE on
+  Windows-hosted servers; GHSA-2xp9-vwfh-vxw4, RCE in the Image Optimization
+  API with AVIF), and `sharp@0.35.3` carried the libheif advisory
+  GHSA-rgj7-g3m4-5g8c. Both ship in the image. `eslint-config-next` moves
+  with `next`; no application code changed.
 - **Runtime image no longer ships the npm CLI**: the Node base image's bundled
   npm vendors its own dependency tree (`tar`, `sigstore`, `brace-expansion`,
   `picomatch`) that carried 1 CRITICAL + 5 HIGH advisories in the `0.2.0`
