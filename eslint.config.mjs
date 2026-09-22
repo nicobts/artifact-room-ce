@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Node CLI tooling; not a Next.js surface.
     "internal/**",
+    // Demo recording scripts (docs/launch/demo); not a Next.js surface.
+    "docs/launch/demo/**",
   ]),
 ]);
 
